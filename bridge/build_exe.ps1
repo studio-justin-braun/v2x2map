@@ -18,7 +18,7 @@ if ($buildDir) {
     Copy-Item "$buildDir\its-g5-receiver-firmware.bin" ".\firmware\firmware.bin"  -Force -ErrorAction Stop
     Write-Host "Refreshed bundled firmware bins from $buildDir"
 } else {
-    Write-Host "No ..\firmware\build\ found — using existing firmware\*.bin"
+    Write-Host "No ..\firmware\build\ found - using existing firmware\*.bin"
 }
 
 # Need pyinstaller, esptool, paho-mqtt, pyserial in the active Python env.

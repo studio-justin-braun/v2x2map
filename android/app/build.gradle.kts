@@ -42,7 +42,9 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            isShrinkResources = false
+            // No proguardFiles — keeping bytecode 1:1 with debug, only the
+            // signing config and android:debuggable=false differ.
             signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }
