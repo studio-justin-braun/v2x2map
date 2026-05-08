@@ -6,6 +6,11 @@ Plug a $20 ESP32-C5 dev board into your phone, drive somewhere with modern infra
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
+## Acknowledgements
+
+Big thanks to the team behind [**opentrafficmap/its-g5-receiver-firmware**](https://codeberg.org/opentrafficmap/its-g5-receiver-firmware) on Codeberg — without their foundational work this project would not exist. V2X2MAP is a fork of their firmware adapted for the Waveshare ESP32-C5-WIFI6-KIT devboard, extended with BLE streaming, the Android app, and the Windows installer.
+
+
 ---
 
 ## What it is
@@ -27,11 +32,10 @@ One **Waveshare ESP32-C5-WIFI6-KIT** dev board and any Android phone with USB-OT
 
 The board supports 5.9 GHz IEEE 802.11p out of the box; the firmware drives it as a sniffer and forwards captured frames to your phone.
 
-- **Amazon:** [Waveshare ESP32-C5-WROOM-1 dev board](https://www.amazon.de/dp/B0GXVKM7PH?***REMOVED***) ***REMOVED***
-- **AliExpress:** [Waveshare Official Store](https://s.click.aliexpress.com/e/_c3pGqqLN) ***REMOVED***
-
+- **Amazon:** [Waveshare ESP32-C5-WROOM-1 dev board](https://www.amazon.de/dp/B0GXVKM7PH?***REMOVED***) *
+- **AliExpress:** [Waveshare Official Store](https://s.click.aliexpress.com/e/_c3pGqqLN) *
 ---
-
+  
 ## Features
 
 | Feature | Description |
@@ -138,8 +142,7 @@ Receiving and forwarding ITS-G5 radio data may be subject to national telecommun
 
 Code is published under the **MIT License** — see [`LICENSE`](LICENSE).
 
+*affiliate link (no extra cost for you)
 ---
 
-## Acknowledgements
 
-Big thanks to the team behind [**opentrafficmap/its-g5-receiver-firmware**](https://codeberg.org/opentrafficmap/its-g5-receiver-firmware) on Codeberg — without their foundational work this project would not exist. V2X2MAP is a fork of their firmware adapted for the Waveshare ESP32-C5-WIFI6-KIT devboard, extended with BLE streaming, the Android app, and the Windows installer.
