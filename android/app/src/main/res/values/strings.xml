@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">V2X2MAP</string>
+    <string name="status_disconnected">USB: not connected</string>
+    <string name="status_connected">USB: %1$s</string>
+    <string name="bt_status_disconnected">BT: not connected</string>
+    <string name="bt_status_connected">BT: %1$s</string>
+    <string name="connect">USB</string>
+    <string name="disconnect">USB ✕</string>
+    <string name="connect_bt">BT</string>
+    <string name="disconnect_bt">BT ✕</string>
+    <string name="mqtt_off">MQTT</string>
+    <string name="mqtt_on">MQTT (on)</string>
+    <string name="mqtt_broker_hint">mqtts://broker:port</string>
+    <string name="default_mqtt_broker">mqtts://cits1.opentrafficmap.org:8883</string>
+    <string name="node_id_hint">Node ID</string>
+    <string name="default_node_id">d2cf13ed6293</string>
+    <string name="stat_total">total %1$d</string>
+    <string name="stat_rate">%1$d/min</string>
+    <string name="frames_log_header">Frame log</string>
+    <string name="empty_log">no frames received yet…</string>
+
+    <!-- Top-level actions -->
+    <string name="locate">Locate</string>
+    <string name="follow_on">Follow ●</string>
+    <string name="follow_off">Follow</string>
+    <string name="settings">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="about_title">About V2X2MAP</string>
+
+    <!-- Settings -->
+    <string name="rec_off">Record</string>
+    <string name="rec_on">Stop recording</string>
+    <string name="rec_section">Frame recording</string>
+    <string name="rec_status_idle">No recording active</string>
+    <string name="rec_status_active">Active: %1$s (%2$d frames)</string>
+    <string name="rec_started">Recording started: %1$s</string>
+    <string name="rec_stopped">Recording stopped (%1$d frames, %2$s)</string>
+
+    <string name="map_section">Map</string>
+    <string name="dl_map">Pre-download visible area</string>
+    <string name="map_dl_started">Map download starting…</string>
+    <string name="map_dl_done">Map download finished</string>
+    <string name="map_dl_progress">Map download: %1$d / %2$d</string>
+    <string name="map_dl_unsupported">This tile source does not allow bulk download. Pan and zoom around to fill the cache automatically.</string>
+
+    <string name="follow_section">Auto-follow</string>
+    <string name="follow_label">Centre map automatically while moving</string>
+    <string name="follow_hint">Zoom adapts to speed: 18 standing still, 14 above 80 km/h.</string>
+
+    <string name="audio_section">Audio feedback</string>
+    <string name="audio_label">Geiger-counter mode</string>
+    <string name="audio_hint">Short tick on every received frame, distinct ping + buzz on a DENM hazard. Plays on the notification stream.</string>
+
+    <string name="loc_unknown">Location unknown</string>
+    <string name="loc_perm_denied">Location permission denied</string>
+
+    <string name="ble_section">BLE coex cycle</string>
+    <string name="cycle_settings">Cycle</string>
+    <string name="cycle_presets_label">Preset</string>
+    <string name="cycle_disc_label">Disc (no BLE client) — Sniff / BLE ms</string>
+    <string name="cycle_conn_label">Conn (BLE connected) — Sniff / BLE ms</string>
+    <string name="cycle_hint">100…60000 ms per field. Keep Sniff &lt; 30 s or the BLE link will drop on the host supervision timeout.</string>
+    <string name="preset_wardriving">Wardriving</string>
+    <string name="preset_stationary">Stationary</string>
+    <string name="preset_pairing">Pairing</string>
+    <string name="cycle_saved">Cycle written</string>
+    <string name="cycle_not_connected">Connect BLE first</string>
+    <string name="sniff_ms_hint">Sniff ms</string>
+    <string name="ble_ms_hint">BLE ms</string>
+
+    <string name="mqtt_section">MQTT</string>
+    <string name="mqtt_enable">Enable MQTT</string>
+    <string name="mqtt_broker_label">Broker URL</string>
+    <string name="mqtt_node_label">Node ID</string>
+
+    <string name="about_section">About</string>
+    <string name="about_link">Licenses / About this app</string>
+    <string name="github_link">GitHub repository</string>
+    <string name="github_url">https://github.com/pit711/V2X2MAP</string>
+
+    <!-- Legal disclaimer -->
+    <string name="legal_title">Legal notice</string>
+    <string name="legal_body">V2X2MAP receives and logs ITS-G5 (5.9 GHz, IEEE 802.11p) radio data from vehicles and infrastructure. Receiving and processing this data is subject to national law — in particular telecommunications regulations, data-protection law and the recording of personal data. Make sure you are entitled to receive (and, where applicable, forward) this radio data in your jurisdiction before using the app. By default this app does not upload data to external servers. By tapping "Accept" you confirm that you take responsibility for compliant use.</string>
+    <string name="legal_accept">Accept</string>
+    <string name="legal_quit">Quit</string>
+
+    <!-- About body -->
+    <string name="about_app_name">V2X2MAP</string>
+    <string name="about_version">Version %1$s (build %2$d)</string>
+    <string name="about_blurb">Open-source receiver and live map for ITS-G5 (V2X) vehicle and infrastructure data. Hardware: ESP32-C5 sniffer + USB and BLE bridge.</string>
+    <string name="about_licenses_header">Open-source libraries</string>
+    <string name="about_license_osmdroid">OSMdroid — Apache License 2.0</string>
+    <string name="about_license_mik3y">usb-serial-for-android — MIT License</string>
+    <string name="about_license_paho">Eclipse Paho MQTT Client — EPL 2.0</string>
+    <string name="about_license_play_services">Play Services Location — Apache 2.0</string>
+    <string name="about_license_material">Android Material Components — Apache 2.0</string>
+    <string name="about_license_flexbox">FlexboxLayout — Apache 2.0</string>
+    <string name="about_license_kotlin">Kotlin Standard Library &amp; Coroutines — Apache 2.0</string>
+    <string name="about_credits">Based on the firmware from opentrafficmap/its-g5-receiver-firmware (forked for ESP32-C5 + BLE streaming).</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Plain Material 3 day/night with the system's dynamic colors. The
+         action bar is provided by an explicit MaterialToolbar in the layout. -->
+    <style name="Theme.V2X2MAP" parent="Theme.Material3.DayNight.NoActionBar"/>
+</resources>

@@ -1,0 +1,32 @@
+# Firmware build artifacts (idf.py)
+firmware/build/
+firmware/managed_components/
+firmware/dependencies.lock
+firmware/sdkconfig.old
+
+# Python venv / pycache / PyInstaller
+bridge/__pycache__/
+bridge/build/
+bridge/dist/
+bridge/*.egg-info/
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/captures/
+android/.kotlin/
+*.iml
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Captured frame logs
+*.itsg5
+
+# On-device USB diagnostics dumps
+blelog.txt

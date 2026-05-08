@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/cycle_presets_label"
+        android:textColor="@color/text_dim"
+        android:textSize="11sp"
+        android:textAllCaps="true"
+        android:layout_marginBottom="6dp"/>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp">
+
+        <Button
+            android:id="@+id/presetWardriving"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:textSize="11sp"
+            android:text="@string/preset_wardriving"/>
+
+        <Button
+            android:id="@+id/presetStationary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="4dp"
+            android:textSize="11sp"
+            android:text="@string/preset_stationary"/>
+
+        <Button
+            android:id="@+id/presetPairing"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:textSize="11sp"
+            android:text="@string/preset_pairing"/>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/cycle_disc_label"
+        android:textColor="@color/text_dim"
+        android:textSize="11sp"
+        android:textAllCaps="true"
+        android:layout_marginTop="6dp"/>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/edDiscSniff"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:hint="@string/sniff_ms_hint"
+            android:inputType="number"/>
+
+        <EditText
+            android:id="@+id/edDiscBle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:hint="@string/ble_ms_hint"
+            android:inputType="number"/>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/cycle_conn_label"
+        android:textColor="@color/text_dim"
+        android:textSize="11sp"
+        android:textAllCaps="true"
+        android:layout_marginTop="12dp"/>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/edConnSniff"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:hint="@string/sniff_ms_hint"
+            android:inputType="number"/>
+
+        <EditText
+            android:id="@+id/edConnBle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:hint="@string/ble_ms_hint"
+            android:inputType="number"/>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/cycle_hint"
+        android:textColor="@color/text_dim"
+        android:textSize="10sp"
+        android:layout_marginTop="10dp"/>
+</LinearLayout>

@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ITS-G5 Receiver Dashboard</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: ui-monospace, Consolas, monospace; background:#0e1116; color:#dde; }
+  header { padding: 8px 14px; background:#161b22; border-bottom:1px solid #30363d; display:flex; gap:24px; align-items:baseline; flex-wrap:wrap; }
+  header h1 { font-size:14px; margin:0; color:#fff; font-weight:600; }
+  header .stat { font-size:12px; color:#8b949e; }
+  header .stat b { color:#58a6ff; }
+  #conn { font-size:11px; padding:2px 8px; border-radius:10px; }
+  #conn.up { background:#1f6feb; color:#fff; }
+  #conn.down { background:#da3633; color:#fff; }
+
+  .toggle { background:#21262d; color:#8b949e; border:1px solid #30363d; padding:3px 10px; border-radius:12px; font-size:11px; cursor:pointer; font-family:inherit; }
+  .toggle:hover:not([disabled]) { background:#30363d; color:#dde; }
+  .toggle.on { background:#238636; color:#fff; border-color:#238636; }
+  .toggle.on:hover { background:#2ea043; }
+  .toggle[disabled] { opacity:0.5; cursor:not-allowed; }
+
+  main { display:grid; grid-template-columns: 1fr 1fr; gap:1px; background:#30363d; height: calc(100vh - 40px); min-height:0; }
+  #map { background:#000; }
+  #logwrap { background:#0d1117; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
+  #logwrap h2 { font-size:12px; color:#8b949e; margin:0; padding:6px 10px; border-bottom:1px solid #21262d; text-transform:uppercase; letter-spacing:1px; }
+  #log { flex:1; overflow:auto; font-size:11px; min-height:0; }
+
+  table { width:100%; border-collapse: collapse; }
+  th { position:sticky; top:0; background:#161b22; color:#8b949e; padding:4px 8px; text-align:left; font-weight:500; border-bottom:1px solid #30363d; }
+  td { padding:3px 8px; border-bottom:1px solid #161b22; vertical-align:top; white-space:nowrap; }
+  tr:hover td { background:#161b22; }
+  .hex { color:#79c0ff; font-size:10px; }
+  .et-its  { color:#7ee787; font-weight:bold; }
+  .et-wlan { color:#8b949e; }
+  .et-?    { color:#f0883e; }
+  #empty { padding:18px; color:#666; text-align:center; }
+
+  .car-icon { background:none; border:none; }
+  .car-icon svg { display:block; filter: drop-shadow(0 0 2px rgba(0,0,0,0.6)); }
+  .leaflet-popup-content { font-family: ui-monospace, Consolas, monospace; font-size:12px; line-height:1.55; }
+  .leaflet-popup-content .lbl { color:#666; display:inline-block; min-width:64px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ITS-G5 Receiver Dashboard</h1>
+  <span class="stat">node <b id="node">?</b></span>
+  <span class="stat">total <b id="ntotal">0</b></span>
+  <span class="stat">last 60s <b id="nrate">0</b></span>
+  <span class="stat">last frame <b id="last">–</b></span>
+  <span style="flex:1"></span>
+  <button id="mqtt-toggle" class="toggle" type="button" title="Toggle MQTT publishing to opentrafficmap.org">
+    MQTT: <span id="mqtt-state-text">…</span>
+  </button>
+  <span id="conn" class="down">disconnected</span>
+</header>
+<main>
+  <div id="map"></div>
+  <div id="logwrap">
+    <h2>frame log (newest first)</h2>
+    <div id="log">
+      <div id="empty">waiting for frames…</div>
+    </div>
+  </div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<script>
+  // ----- map -----
+  const map = L.map('map').setView([51.0, 10.0], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19,
+  }).addTo(map);
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function colorForId(id) {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+    const hue = ((h % 360) + 360) % 360;
+    return `hsl(${hue}, 80%, 55%)`;
+  }
+
+  // ----- vehicle tracking -----
+  const vehicles = new Map();
+  let firstFix = false;
+
+  function carIcon(headingDeg, color) {
+    const rot = Number.isFinite(headingDeg) ? headingDeg : 0;
+    return L.divIcon({
+      className: 'car-icon',
+      html: `<svg width="26" height="26" viewBox="-13 -13 26 26" style="transform: rotate(${rot}deg)">
+        <path d="M0,-11 L8,9 L0,4 L-8,9 Z" fill="${color}" stroke="#fff" stroke-width="1.2"/>
+      </svg>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+    });
+  }
+
+  function popupHtml(v) {
+    const f = v.lastFrame;
+    const speedKmh = (f.speed_mps * 3.6).toFixed(1);
+    return `<div>
+      <div style="font-weight:bold;color:${v.color};margin-bottom:4px;">${escapeHtml(f.station_type_label)}</div>
+      <div><span class="lbl">ID</span>${escapeHtml(f.gn_addr)}</div>
+      <div><span class="lbl">Position</span>${f.lat.toFixed(6)}, ${f.lon.toFixed(6)}</div>
+      <div><span class="lbl">Speed</span>${speedKmh} km/h</div>
+      <div><span class="lbl">Heading</span>${f.heading_deg.toFixed(1)}°</div>
+      <div><span class="lbl">PAI</span>${f.pai}</div>
+      <div><span class="lbl">Frames</span>${v.count}</div>
+      <div><span class="lbl">Last seen</span>${v.lastSeen}</div>
+    </div>`;
+  }
+
+  function onPositionFrame(f) {
+    const id = f.gn_addr;
+    const ll = [f.lat, f.lon];
+    let v = vehicles.get(id);
+    if (!v) {
+      const color = colorForId(id);
+      v = {
+        color, points: [], count: 0, lastFrame: f,
+        lastSeen: new Date().toLocaleTimeString(),
+        line: L.polyline([], { color, weight: 3, opacity: 0.85 }).addTo(map),
+        marker: L.marker(ll, { icon: carIcon(f.heading_deg, color) }).addTo(map),
+      };
+      v.marker.bindPopup('', { autoPan: true, maxWidth: 360 });
+      v.marker.on('popupopen', () => v.marker.setPopupContent(popupHtml(v)));
+      vehicles.set(id, v);
+      if (!firstFix) { firstFix = true; map.setView(ll, 14); }
+    }
+    v.points.push(ll);
+    v.count++;
+    v.lastFrame = f;
+    v.lastSeen = new Date().toLocaleTimeString();
+    v.line.setLatLngs(v.points);
+    v.marker.setLatLng(ll);
+    v.marker.setIcon(carIcon(f.heading_deg, v.color));
+    if (v.marker.isPopupOpen()) v.marker.setPopupContent(popupHtml(v));
+  }
+
+  // ----- frame log -----
+  const logBody = document.getElementById('log');
+  const empty   = document.getElementById('empty');
+  const conn    = document.getElementById('conn');
+  const nNode   = document.getElementById('node');
+  const nTotal  = document.getElementById('ntotal');
+  const nRate   = document.getElementById('nrate');
+  const nLast   = document.getElementById('last');
+
+  let table = null;
+  function ensureTable() {
+    if (table) return;
+    if (empty) empty.remove();
+    table = document.createElement('table');
+    table.innerHTML = `
+      <thead><tr>
+        <th>time</th><th>sec</th><th>usec</th><th>len</th><th>EtherType</th><th>hex preview</th>
+      </tr></thead>
+      <tbody></tbody>`;
+    logBody.appendChild(table);
+  }
+
+  let total = 0;
+  const recent = [];
+  const MAX_ROWS = 500;
+
+  function classifyEtherType(et) {
+    if (et === 0x8947) return ['ITS-G5', 'et-its'];
+    if (et === null)   return ['?', 'et-?'];
+    return [`0x${et.toString(16).padStart(4,'0')}`, 'et-wlan'];
+  }
+
+  function addRow(frame) {
+    ensureTable();
+    const tbody = table.tBodies[0];
+    const tr = document.createElement('tr');
+    const t = new Date().toLocaleTimeString();
+    const [etLabel, etCls] = classifyEtherType(frame.ether_type);
+    tr.innerHTML = `
+      <td>${t}</td>
+      <td>${frame.sec}</td>
+      <td>${frame.usec}</td>
+      <td>${frame.len}</td>
+      <td class="${etCls}">${etLabel}</td>
+      <td class="hex">${escapeHtml(frame.hex)}</td>`;
+    tbody.insertBefore(tr, tbody.firstChild);
+    while (tbody.rows.length > MAX_ROWS) tbody.deleteRow(MAX_ROWS);
+
+    total++;
+    nTotal.textContent = total;
+    nLast.textContent  = t;
+    const now = Date.now();
+    recent.push(now);
+    while (recent.length && recent[0] < now - 60000) recent.shift();
+    nRate.textContent = recent.length;
+  }
+
+  // ----- MQTT toggle -----
+  const mqttBtn = document.getElementById('mqtt-toggle');
+  const mqttStateText = document.getElementById('mqtt-state-text');
+  let mqttState = { enabled: false, available: false };
+
+  function renderMqttState() {
+    mqttBtn.classList.toggle('on', mqttState.enabled && mqttState.available);
+    mqttBtn.disabled = !mqttState.available;
+    if (!mqttState.available) {
+      mqttStateText.textContent = 'unavailable';
+      mqttBtn.title = 'Bridge was started with --no-mqtt — no broker client active.';
+    } else {
+      mqttStateText.textContent = mqttState.enabled ? 'on' : 'off (local)';
+      mqttBtn.title = mqttState.enabled
+        ? 'Frames are being published to cits1.opentrafficmap.org. Click to switch to local.'
+        : 'Frames stay local. Click to publish to opentrafficmap.org.';
+    }
+  }
+
+  mqttBtn.addEventListener('click', () => {
+    if (!mqttState.available) return;
+    const want = !mqttState.enabled;
+    mqttBtn.disabled = true;
+    fetch('/api/mqtt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: want }),
+    })
+    .then(r => r.json())
+    .then(s => { mqttState = s; renderMqttState(); })
+    .catch(() => { renderMqttState(); });
+  });
+
+  // ----- SSE -----
+  function connect() {
+    const es = new EventSource('/events');
+    es.onopen = () => { conn.textContent = 'connected'; conn.className = 'up'; };
+    es.onerror = () => { conn.textContent = 'reconnecting…'; conn.className = 'down'; };
+    es.addEventListener('hello', e => {
+      const d = JSON.parse(e.data);
+      nNode.textContent = d.node_id || '?';
+      if (d.mqtt) { mqttState = d.mqtt; renderMqttState(); }
+    });
+    es.addEventListener('mqtt_state', e => {
+      mqttState = JSON.parse(e.data);
+      renderMqttState();
+    });
+    es.addEventListener('frame', e => {
+      const f = JSON.parse(e.data);
+      addRow(f);
+      if (typeof f.lat === 'number' && typeof f.lon === 'number' && f.gn_addr) {
+        onPositionFrame(f);
+      }
+    });
+  }
+  renderMqttState();
+  connect();
+</script>
+</body>
+</html>

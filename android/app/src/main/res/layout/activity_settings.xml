@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="@string/settings_title"
+            app:navigationIcon="@drawable/ic_back"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <!-- Auto-Follow -->
+            <TextView
+                style="@style/Section.Header"
+                android:text="@string/follow_section"/>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swFollow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/follow_label"/>
+
+            <TextView
+                style="@style/Section.Hint"
+                android:text="@string/follow_hint"/>
+
+            <!-- Geiger-counter audio -->
+            <TextView
+                style="@style/Section.Header"
+                android:text="@string/audio_section"/>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swAudio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/audio_label"/>
+
+            <TextView
+                style="@style/Section.Hint"
+                android:text="@string/audio_hint"/>
+
+            <!-- MQTT -->
+            <TextView
+                style="@style/Section.Header"
+                android:text="@string/mqtt_section"/>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swMqtt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/mqtt_enable"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/mqtt_broker_label">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edBrokerUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textUri"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/mqtt_node_label">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edNodeId"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Recording -->
+            <TextView
+                style="@style/Section.Header"
+                android:text="@string/rec_section"/>
+
+            <TextView
+                android:id="@+id/recStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/rec_status_idle"
+                android:textSize="13sp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRecord"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/rec_off"/>
+
+            <!-- Map -->
+            <TextView
+                style="@style/Section.Header"
+                android:text="@string/map_section"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDownloadMap"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/dl_map"/>
+
+            <!-- BLE Coex -->
+            <TextView
+                style="@style/Section.Header"
+                android:text="@string/ble_section"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCycle"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/cycle_settings"/>
+
+            <!-- About -->
+            <TextView
+                style="@style/Section.Header"
+                android:text="@string/about_section"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAbout"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="start|center_vertical"
+                android:text="@string/about_link"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGithub"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="start|center_vertical"
+                android:text="@string/github_link"/>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

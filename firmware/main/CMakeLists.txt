@@ -1,0 +1,33 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "cmd_sniffer.c"
+        "cmd_pcap.c"
+        "config.c"
+        "ethernet.c"
+        "events.c"
+        "led.c"
+        "mqtt.c"
+        "ota.c"
+        "sdcard.c"
+        "spi.c"
+        "temperature.c"
+        "usb_stream.c"
+        "bt_stream.c"
+    PRIV_REQUIRES
+        app_trace
+        app_update
+        bt
+        console
+        esp_coex
+        esp_driver_usb_serial_jtag
+        esp_eth
+        esp_https_ota
+        esp_netif
+        esp_wifi
+        fatfs
+        nvs_flash
+    INCLUDE_DIRS
+        "."
+)
+

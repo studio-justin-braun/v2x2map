@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Espressif (ESP32-C5 USB-Serial-JTAG): VID 0x303A -->
+    <usb-device vendor-id="12346"/>
+    <!-- Silicon Labs CP210x (some custom boards) -->
+    <usb-device vendor-id="4292"/>
+    <!-- WCH CH340/CH341 -->
+    <usb-device vendor-id="6790"/>
+    <!-- WCH CH9102 -->
+    <usb-device vendor-id="7427"/>
+    <!-- FTDI -->
+    <usb-device vendor-id="1027"/>
+</resources>

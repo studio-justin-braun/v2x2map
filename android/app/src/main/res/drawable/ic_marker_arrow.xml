@@ -1,0 +1,15 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- White outline so the marker stays visible on dark/light tiles -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,1 L20,21 L12,16 L4,21 Z"/>
+    <!-- Tinted body (filled at runtime per message type) -->
+    <path
+        android:fillColor="#FF000000"
+        android:tint="#FF000000"
+        android:pathData="M12,3 L18.5,19.5 L12,15.5 L5.5,19.5 Z"/>
+</vector>

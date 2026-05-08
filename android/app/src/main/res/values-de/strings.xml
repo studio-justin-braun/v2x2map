@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="status_disconnected">USB: nicht verbunden</string>
+    <string name="status_connected">USB: %1$s</string>
+    <string name="bt_status_disconnected">BT: nicht verbunden</string>
+    <string name="bt_status_connected">BT: %1$s</string>
+
+    <string name="locate">Standort</string>
+    <string name="follow_on">Folgen ●</string>
+    <string name="follow_off">Folgen</string>
+    <string name="settings">Einstellungen</string>
+    <string name="settings_title">Einstellungen</string>
+    <string name="about_title">Über V2X2MAP</string>
+
+    <string name="rec_off">Aufnahme</string>
+    <string name="rec_on">Aufnahme stoppen</string>
+    <string name="rec_section">Frame-Aufnahme</string>
+    <string name="rec_status_idle">Keine Aufnahme aktiv</string>
+    <string name="rec_status_active">Läuft: %1$s (%2$d Frames)</string>
+    <string name="rec_started">Aufnahme gestartet: %1$s</string>
+    <string name="rec_stopped">Aufnahme gestoppt (%1$d Frames, %2$s)</string>
+
+    <string name="map_section">Karte</string>
+    <string name="dl_map">Sichtbaren Bereich vorab laden</string>
+    <string name="map_dl_started">Karten-Download startet …</string>
+    <string name="map_dl_done">Karten-Download fertig</string>
+    <string name="map_dl_progress">Karten-Download: %1$d / %2$d</string>
+    <string name="map_dl_unsupported">Diese Tile-Quelle erlaubt keinen Bulk-Download. Pann/zoom durch die Karte, dann füllt sich der Cache von selbst.</string>
+
+    <string name="follow_section">Auto-Follow</string>
+    <string name="follow_label">Karte beim Fahren automatisch zentrieren</string>
+    <string name="follow_hint">Zoom passt sich der Geschwindigkeit an: 18 stehend, 14 ab 80 km/h.</string>
+
+    <string name="audio_section">Audio-Feedback</string>
+    <string name="audio_label">Geiger-Counter-Modus</string>
+    <string name="audio_hint">Kurzer Klick bei jedem empfangenen Frame, eigenständiger Ton + Vibration bei DENM-Gefahrenmeldungen. Läuft auf dem Notifications-Stream.</string>
+
+    <string name="loc_unknown">Standort unbekannt</string>
+    <string name="loc_perm_denied">Standortberechtigung verweigert</string>
+
+    <string name="ble_section">BLE-Coex-Cycle</string>
+    <string name="cycle_disc_label">Disc (kein BLE-Client) — Sniff / BLE ms</string>
+    <string name="cycle_conn_label">Conn (BLE verbunden) — Sniff / BLE ms</string>
+    <string name="cycle_hint">100…60000 ms je Feld. Sniff &lt; 30 s, sonst bricht die BLE-Verbindung wegen Supervision-Timeout.</string>
+    <string name="cycle_saved">Cycle geschrieben</string>
+    <string name="cycle_not_connected">Erst BLE verbinden</string>
+
+    <string name="mqtt_section">MQTT</string>
+    <string name="mqtt_enable">MQTT aktivieren</string>
+    <string name="mqtt_broker_label">Broker-URL</string>
+    <string name="mqtt_node_label">Node-ID</string>
+
+    <string name="about_section">Über</string>
+    <string name="about_link">Lizenzen / Über die App</string>
+    <string name="github_link">GitHub-Repository</string>
+
+    <string name="legal_title">Rechtlicher Hinweis</string>
+    <string name="legal_body">V2X2MAP empfängt und protokolliert ITS-G5 (5,9 GHz, IEEE 802.11p)-Funkdaten von Fahrzeugen und Infrastruktur. Das Empfangen und Verarbeiten dieser Daten unterliegt nationalen Gesetzen — insbesondere zu Funkrecht, Datenschutz und Aufzeichnung personenbezogener Daten. Stelle vor Nutzung sicher, dass du in deinem Land berechtigt bist, diese Funkdaten zu empfangen und gegebenenfalls weiterzuleiten. Diese App speichert standardmäßig keine Daten auf externen Servern. Mit Tippen auf „Akzeptieren" bestätigst du, dass du die rechtliche Verantwortung trägst.</string>
+    <string name="legal_accept">Akzeptieren</string>
+    <string name="legal_quit">Beenden</string>
+
+    <string name="about_blurb">Open-Source-Empfänger und Live-Map für ITS-G5- (V2X-) Fahrzeug- und Infrastrukturdaten. Hardware: ESP32-C5-Sniffer + USB- und BLE-Bridge.</string>
+    <string name="about_licenses_header">Open-Source-Bibliotheken</string>
+    <string name="about_credits">Basiert auf der Firmware von opentrafficmap/its-g5-receiver-firmware (geforkt für ESP32-C5 + BLE-Stream).</string>
+</resources>
