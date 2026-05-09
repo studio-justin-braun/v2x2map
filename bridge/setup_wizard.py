@@ -235,40 +235,45 @@ class SetupWizard:
 
     def _scan_worker(self):
         networks: list[str] = []
+        error_msg = ""
         try:
-            # Windows: netsh wlan show networks
-            out = subprocess.check_output(
-                ["netsh", "wlan", "show", "networks", "mode=bssid"],
-                encoding="utf-8", errors="replace", timeout=10,
-                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0,
+            flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            result = subprocess.run(
+                ["netsh", "wlan", "show", "networks"],
+                capture_output=True, text=True, timeout=12,
+                creationflags=flags,
             )
+            out = result.stdout + result.stderr
             seen: set[str] = set()
             for line in out.splitlines():
-                m = re.match(r"\s*SSID\s+\d+\s*:\s*(.+)", line)
+                # Match "SSID 1 : MyNetwork" or "SSID 1: MyNetwork" (any locale)
+                m = re.match(r"^\s*SSID\s+\d+\s*:\s*(.+)$", line)
                 if m:
                     ssid = m.group(1).strip()
                     if ssid and ssid not in seen:
                         seen.add(ssid)
                         networks.append(ssid)
+            if not networks and result.returncode != 0:
+                error_msg = result.stderr.strip() or "netsh returned no results"
         except FileNotFoundError:
             # Linux / macOS fallback: nmcli
             try:
-                out = subprocess.check_output(
+                result = subprocess.run(
                     ["nmcli", "-t", "-f", "SSID", "dev", "wifi", "list"],
-                    encoding="utf-8", errors="replace", timeout=10,
+                    capture_output=True, text=True, timeout=12,
                 )
                 seen2: set[str] = set()
-                for line in out.splitlines():
+                for line in result.stdout.splitlines():
                     ssid = line.strip()
                     if ssid and ssid not in seen2:
                         seen2.add(ssid)
                         networks.append(ssid)
-            except Exception:
-                networks = []
-        except Exception:
-            networks = []
+            except Exception as e:
+                error_msg = str(e)
+        except Exception as e:
+            error_msg = str(e)
 
-        self.root.after(0, self._on_scan_done, networks)
+        self.root.after(0, self._on_scan_done, networks, error_msg)
 
     # ── Step 5: Network ─────────────────────────────────────────────────
     def _build_step5(self, nb):
@@ -295,14 +300,19 @@ class SetupWizard:
         ttk.Button(bar, text="Next >", command=lambda: self.nb.select(5)).pack(side="right", padx=(0,8))
         ttk.Button(bar, text="< Back", command=lambda: self.nb.select(3)).pack(side="right")
 
-    def _on_scan_done(self, networks: list[str]):
+    def _on_scan_done(self, networks: list[str], error_msg: str = ""):
         self.scan_btn.configure(state="normal")
         if networks:
             for combo in self._ssid_combos:
                 combo["values"] = networks
-            self.scan_status.configure(text=f"{len(networks)} network(s) found", foreground="green")
+            self.scan_status.configure(
+                text=f"{len(networks)} network(s) found", foreground="green")
+        elif error_msg:
+            self.scan_status.configure(
+                text=f"Scan failed: {error_msg}", foreground="red")
         else:
-            self.scan_status.configure(text="No networks found (try manual entry)", foreground="gray")
+            self.scan_status.configure(
+                text="No networks found — enter SSID manually", foreground="gray")
 
     def _on_dhcp_toggle(self):
         state = "disabled" if self.use_dhcp.get() else "normal"
@@ -584,8 +594,19 @@ class SetupWizard:
                 if "pass" not in key:   # password errors are non-fatal
                     ok = False
 
-        ser.close()
-        log("\nDone." if ok else "\nSome settings failed — check log above.")
+        if ok:
+            log("\nConfig written. Rebooting device…")
+            ser2 = serial.Serial(port, 115200, timeout=2)
+            ser2.dtr = False; ser2.rts = False
+            ser2.write(b"REBOOT\n")
+            resp = ser2.read(32).decode("utf-8", errors="replace")
+            ser2.close()
+            if "REBOOT_OK" in resp:
+                log("Device rebooting — ready to connect.\n")
+            else:
+                log("(no reboot ack — please reset the device manually)\n")
+        else:
+            log("\nSome settings failed — check log above.")
         self.root.after(0, self._on_apply_done, ok)
 
     def _on_apply_done(self, ok: bool):

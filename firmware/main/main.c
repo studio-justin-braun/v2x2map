@@ -164,9 +164,11 @@ void app_main(void)
     bt_stream_init();
 
     /* Start WiFi manager if configured; BLE always available */
-    wifi_manager_init();     /* returns ESP_ERR_NOT_SUPPORTED for BLE-only */
+    wifi_manager_init();     /* read config + register handlers; no WiFi start yet */
 
-    sniffer_autostart();
+    sniffer_autostart();     /* start sniffer in NULL + promiscuous mode */
+
+    wifi_manager_start();    /* now safe to switch radio: STA or cycle task */
 
     usb_stream_send_test_frame();
 

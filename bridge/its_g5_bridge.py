@@ -243,7 +243,8 @@ def _maybe_run_wizard():
                 "--port", result["port"],
                 "--node-id", result["node_id"],
                 "--reset-on-start",
-                "--open-browser"]
+                "--open-browser",
+                "--verbose"]
 
 
 def main():

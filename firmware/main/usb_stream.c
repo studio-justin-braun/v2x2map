@@ -11,6 +11,7 @@
 #include "nvs.h"
 
 #include "config.h"
+#include "esp_system.h"
 #include "led.h"
 
 static const char TAG[] = "USB_STREAM";
@@ -107,6 +108,14 @@ static bool is_u32_key(const char *key)
 
 static void handle_cfg_command(char *line)
 {
+    /* Reboot command */
+    if (strcmp(line, "REBOOT") == 0) {
+        cfg_reply("REBOOT_OK\n");
+        vTaskDelay(pdMS_TO_TICKS(150));
+        esp_restart();
+        return;
+    }
+
     /* Expect "CFG:key=value" */
     if (strncmp(line, "CFG:", 4) != 0) return;
     char *kv = line + 4;

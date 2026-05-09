@@ -25,6 +25,12 @@ esp_err_t wifi_manager_init(void);
 /** True once the station is associated and has an IP. */
 bool wifi_manager_is_connected(void);
 
+/**
+ * Actually start WiFi (STA connect or cycle task).
+ * Must be called AFTER sniffer_autostart() so the radio hand-off is safe.
+ */
+esp_err_t wifi_manager_start(void);
+
 #ifdef __cplusplus
 extern "C" {}
 #endif
