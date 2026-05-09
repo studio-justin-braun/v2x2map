@@ -238,40 +238,47 @@ class SetupWizard:
         error_msg = ""
         try:
             flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            # shell=True avoids FileNotFoundError on some Windows setups;
+            # encoding latin-1 handles non-UTF-8 netsh output (German locale)
             result = subprocess.run(
-                ["netsh", "wlan", "show", "networks"],
-                capture_output=True, text=True, timeout=12,
+                "netsh wlan show networks",
+                shell=True, capture_output=True, timeout=12,
                 creationflags=flags,
             )
-            out = result.stdout + result.stderr
+            out = (result.stdout or b"").decode("latin-1", errors="replace")
+            err = (result.stderr or b"").decode("latin-1", errors="replace")
+
             seen: set[str] = set()
             for line in out.splitlines():
-                # Match "SSID 1 : MyNetwork" or "SSID 1: MyNetwork" (any locale)
-                m = re.match(r"^\s*SSID\s+\d+\s*:\s*(.+)$", line)
+                # "SSID 1 : MyNet" or "SSID 1: MyNet" in any locale/spacing
+                m = re.match(r"^\s*SSID\s+\d+\s*[:：]\s*(.+)$", line)
                 if m:
                     ssid = m.group(1).strip()
                     if ssid and ssid not in seen:
                         seen.add(ssid)
                         networks.append(ssid)
-            if not networks and result.returncode != 0:
-                error_msg = result.stderr.strip() or "netsh returned no results"
-        except FileNotFoundError:
-            # Linux / macOS fallback: nmcli
+
+            if not networks:
+                # Show first 3 lines of output to help diagnose
+                preview = "\n".join((out + err).splitlines()[:3])
+                error_msg = f"No SSIDs found.\n{preview}".strip()
+        except Exception as e:
+            # Try nmcli (Linux/macOS)
             try:
-                result = subprocess.run(
+                result2 = subprocess.run(
                     ["nmcli", "-t", "-f", "SSID", "dev", "wifi", "list"],
                     capture_output=True, text=True, timeout=12,
                 )
                 seen2: set[str] = set()
-                for line in result.stdout.splitlines():
+                for line in result2.stdout.splitlines():
                     ssid = line.strip()
                     if ssid and ssid not in seen2:
                         seen2.add(ssid)
                         networks.append(ssid)
-            except Exception as e:
-                error_msg = str(e)
-        except Exception as e:
-            error_msg = str(e)
+                if not networks:
+                    error_msg = "No networks found via nmcli"
+            except Exception as e2:
+                error_msg = f"netsh: {e} / nmcli: {e2}"
 
         self.root.after(0, self._on_scan_done, networks, error_msg)
 
@@ -596,17 +603,27 @@ class SetupWizard:
 
         if ok:
             log("\nConfig written. Rebooting device…")
-            ser2 = serial.Serial(port, 115200, timeout=2)
-            ser2.dtr = False; ser2.rts = False
-            ser2.write(b"REBOOT\n")
-            resp = ser2.read(32).decode("utf-8", errors="replace")
-            ser2.close()
-            if "REBOOT_OK" in resp:
-                log("Device rebooting — ready to connect.\n")
-            else:
-                log("(no reboot ack — please reset the device manually)\n")
+            try:
+                ser2 = serial.Serial(port, 115200, timeout=2)
+                ser2.dtr = False; ser2.rts = False
+                ser2.write(b"REBOOT\n")
+                # Device may disconnect briefly during reboot — read is best-effort
+                try:
+                    resp = ser2.read(32).decode("utf-8", errors="replace")
+                    if "REBOOT_OK" in resp:
+                        log("Device rebooting — ready in ~3 s.\n")
+                    else:
+                        log("(sent reboot, no ack — normal if device resets fast)\n")
+                except Exception:
+                    log("(device reset — normal)\n")
+                try: ser2.close()
+                except Exception: pass
+            except Exception as reboot_err:
+                log(f"(reboot command failed: {reboot_err} — reset device manually)\n")
         else:
             log("\nSome settings failed — check log above.")
+
+        # Always call this so the Finish button is enabled
         self.root.after(0, self._on_apply_done, ok)
 
     def _on_apply_done(self, ok: bool):
