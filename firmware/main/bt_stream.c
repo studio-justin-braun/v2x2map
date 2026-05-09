@@ -529,6 +529,20 @@ void bt_stream_init(void)
     dbg_printf("[bt] initialized, awaiting on_sync");
 }
 
+void bt_stream_pause(void)
+{
+    if (!s_ready) return;
+    ble_gap_adv_stop();
+    ESP_LOGI(TAG, "BLE advertising stopped for WiFi scan");
+}
+
+void bt_stream_resume(void)
+{
+    if (!s_ready) return;
+    start_advertising();
+    ESP_LOGI(TAG, "BLE advertising restarted");
+}
+
 void bt_stream_publish_packet(const uint8_t *payload, uint16_t len, uint32_t sec, uint32_t usec)
 {
     if (!s_ready) return;
