@@ -31,6 +31,7 @@
 
 #include "cmd_sniffer.h"
 #include "config.h"
+#include "usb_stream.h"
 
 static const char TAG[] = "WIFI_MGR";
 
@@ -138,7 +139,8 @@ static void on_wifi(void *arg, esp_event_base_t base, int32_t id, void *data)
     if (base == WIFI_EVENT) {
         switch (id) {
         case WIFI_EVENT_STA_START:
-            connect_from_nvs();
+            if (!usb_cfg_is_scanning())
+                connect_from_nvs();
             break;
 
         case WIFI_EVENT_STA_DISCONNECTED: {

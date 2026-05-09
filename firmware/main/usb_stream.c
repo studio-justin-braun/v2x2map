@@ -108,46 +108,115 @@ static bool is_u32_key(const char *key)
     return !strcmp(key,"sniffms") || !strcmp(key,"wifims");
 }
 
-/* WiFi scan task — called from SCAN command */
+/* Set while a USB-triggered WiFi scan is in progress.
+ * wifi_manager checks this flag to skip connect_from_nvs() on STA_START. */
+static volatile bool s_cfg_scanning = false;
+bool usb_cfg_is_scanning(void) { return s_cfg_scanning; }
+
+/* Temp event handler: sets BIT0 on WIFI_EVENT_STA_START so the scan task
+ * knows WiFi is ready before calling esp_wifi_scan_start(). */
+static EventGroupHandle_t s_scan_ready_evg;
+static void scan_sta_start_cb(void *arg, esp_event_base_t base,
+                               int32_t id, void *data)
+{
+    if (id == WIFI_EVENT_STA_START && s_scan_ready_evg)
+        xEventGroupSetBits(s_scan_ready_evg, BIT0);
+}
+
+/* WiFi scan task — triggered by SCAN command from the setup wizard */
 static void cfg_scan_task(void *arg)
 {
-    sniffer_pause();
+    char errbuf[80];
+    s_cfg_scanning = true;
 
-    esp_wifi_set_mode(WIFI_MODE_STA);
-    esp_wifi_start();
+    /* At this point the sniffer has NOT yet started (scan runs in the
+     * pre-sniffer window, before sniffer_autostart sets phy_11p_set(1,0)).
+     * WiFi is initialised (esp_wifi_init done) but NOT started. */
+
+    esp_err_t err = esp_wifi_set_mode(WIFI_MODE_STA);
+    if (err != ESP_OK) {
+        snprintf(errbuf, sizeof(errbuf), "SCAN_ERR:set_mode %s\n", esp_err_to_name(err));
+        cfg_reply(errbuf); goto done;
+    }
+
+    esp_wifi_set_storage(WIFI_STORAGE_RAM);
+
+    /* Country DE: channels 1-13 only (avoids scanning empty 5 GHz channels
+     * that BLE coex extends scan time on) */
+    wifi_country_t country = {
+        .cc = "DE", .schan = 1, .nchan = 13,
+        .max_tx_power = 20, .policy = WIFI_COUNTRY_POLICY_MANUAL
+    };
+    esp_wifi_set_country(&country);
+
+    err = esp_wifi_start();
+    if (err != ESP_OK) {
+        snprintf(errbuf, sizeof(errbuf), "SCAN_ERR:start %s\n", esp_err_to_name(err));
+        cfg_reply(errbuf); goto done;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(300));
+
+    /* Non-blocking scan so FreeRTOS scheduler stays responsive.
+     * Wait for WIFI_EVENT_SCAN_DONE via the existing s_scan_ready_evg. */
+    s_scan_ready_evg = xEventGroupCreate();
+    esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_SCAN_DONE,
+                                scan_sta_start_cb, NULL);
 
     wifi_scan_config_t sc = {
+        .ssid = NULL, .bssid = NULL,
         .channel = 0, .show_hidden = false,
         .scan_type = WIFI_SCAN_TYPE_ACTIVE,
-        .scan_time.active.min = 120,
-        .scan_time.active.max = 500,
+        .scan_time.active.min = 500,
+        .scan_time.active.max = 3000,  /* 3 s per channel — survives BLE coex gaps */
     };
-    esp_wifi_scan_start(&sc, true);   /* blocking */
-
-    uint16_t n = 0;
-    esp_wifi_scan_get_ap_num(&n);
-
-    wifi_ap_record_t *aps = NULL;
-    if (n > 0) {
-        aps = malloc(n * sizeof(*aps));
-        if (aps) esp_wifi_scan_get_ap_records(&n, aps);
+    err = esp_wifi_scan_start(&sc, false);  /* non-blocking */
+    if (err != ESP_OK) {
+        snprintf(errbuf, sizeof(errbuf), "SCAN_ERR:scan_start %s\n", esp_err_to_name(err));
+        cfg_reply(errbuf); goto done;
     }
 
-    for (uint16_t i = 0; i < n && aps; i++) {
-        char line[72];
-        int len = snprintf(line, sizeof(line), "SCAN_AP:%s,%d\n",
-                           (char *)aps[i].ssid, aps[i].authmode);
-        if (len > 0)
-            usb_serial_jtag_write_bytes((uint8_t *)line, len, pdMS_TO_TICKS(200));
-    }
-    free(aps);
+    /* Wait for SCAN_DONE event (max 30 s) */
+    xEventGroupWaitBits(s_scan_ready_evg, BIT0, pdTRUE, pdTRUE,
+                        pdMS_TO_TICKS(30000));
+    esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_SCAN_DONE,
+                                 scan_sta_start_cb);
+    vEventGroupDelete(s_scan_ready_evg);
+    s_scan_ready_evg = NULL;
 
+    {
+        uint16_t n = 0;
+        esp_wifi_scan_get_ap_num(&n);
+        char dbg[32];
+        int dl = snprintf(dbg, sizeof(dbg), "SCAN_N:%d\n", (int)n);
+        usb_serial_jtag_write_bytes((uint8_t *)dbg, dl, pdMS_TO_TICKS(200));
+
+        wifi_ap_record_t *aps = NULL;
+        if (n > 0) {
+            aps = malloc(n * sizeof(*aps));
+            if (aps) esp_wifi_scan_get_ap_records(&n, aps);
+        }
+        for (uint16_t i = 0; i < n && aps; i++) {
+            char line[72];
+            int len = snprintf(line, sizeof(line), "SCAN_AP:%s,ch%d,auth%d\n",
+                               (char *)aps[i].ssid,
+                               aps[i].primary, aps[i].authmode);
+            if (len > 0)
+                usb_serial_jtag_write_bytes((uint8_t *)line, len, pdMS_TO_TICKS(200));
+        }
+        free(aps);
+    }
+
+done:
     usb_serial_jtag_write_bytes((uint8_t *)"SCAN_DONE\n", 10, pdMS_TO_TICKS(200));
-
+    if (s_scan_ready_evg) {
+        esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_SCAN_DONE, scan_sta_start_cb);
+        vEventGroupDelete(s_scan_ready_evg);
+        s_scan_ready_evg = NULL;
+    }
     esp_wifi_stop();
     esp_wifi_set_mode(WIFI_MODE_NULL);
-    sniffer_resume();
-
+    s_cfg_scanning = false;
     vTaskDelete(NULL);
 }
 
@@ -164,7 +233,7 @@ static void handle_cfg_command(char *line)
     /* WiFi scan via device radio */
     if (strcmp(line, "SCAN") == 0) {
         cfg_reply("SCAN_START\n");
-        xTaskCreate(cfg_scan_task, "cfg_scan", 4096, NULL, 3, NULL);
+        xTaskCreate(cfg_scan_task, "cfg_scan", 8192, NULL, 3, NULL);
         return;
     }
 

@@ -195,13 +195,15 @@ class SetupWizard:
         ttk.Label(f, text="The device tries these in order. Use Scan to pick from visible networks.",
                   wraplength=560).pack(anchor="w", pady=(4,10))
 
-        # Scan button + status
+        # Boot-ready indicator + scan button
         scan_bar = ttk.Frame(f); scan_bar.pack(fill="x", pady=(0,8))
         self.scan_btn = ttk.Button(scan_bar, text="🔍 Scan for WiFi networks",
-                                   command=self._scan_wifi)
+                                   command=self._scan_wifi, state="disabled")
         self.scan_btn.pack(side="left")
-        self.scan_status = ttk.Label(scan_bar, text="", foreground="gray")
+        self.scan_status = ttk.Label(scan_bar, text="Waiting for device…", foreground="gray")
         self.scan_status.pack(side="left", padx=(10,0))
+        # Start background thread that waits for BOOT_DONE
+        threading.Thread(target=self._wait_boot_done, daemon=True).start()
 
         def wifi_row(parent, label, ssid_var, pass_var, combo_ref: list):
             ttk.Label(parent, text=label, font=("Segoe UI", 9, "bold")).pack(anchor="w")
@@ -304,6 +306,40 @@ class SetupWizard:
         bar = ttk.Frame(f); bar.pack(side="bottom", fill="x", pady=(12,0))
         ttk.Button(bar, text="Next >", command=lambda: self.nb.select(5)).pack(side="right", padx=(0,8))
         ttk.Button(bar, text="< Back", command=lambda: self.nb.select(3)).pack(side="right")
+
+    def _wait_boot_done(self):
+        """Read from the device until BOOT_DONE arrives, then unlock Scan."""
+        port = self._selected_port()
+        if not port:
+            self.root.after(0, lambda: self.scan_status.configure(
+                text="Select COM port first", foreground="orange"))
+            return
+        try:
+            ser = serial.Serial(port, 115200, timeout=1.0)
+            ser.dtr = False; ser.rts = False
+            deadline = time.time() + 15
+            while time.time() < deadline:
+                raw = ser.readline()
+                if not raw:
+                    continue
+                line = raw.decode("utf-8", errors="replace").strip()
+                if line == "BOOT_DONE":
+                    ser.close()
+                    self.root.after(0, self._on_boot_done)
+                    return
+            ser.close()
+            # Timeout — device may already be booted, enable scan anyway
+            self.root.after(0, self._on_boot_done)
+        except Exception as e:
+            self.root.after(0, lambda: self.scan_status.configure(
+                text=f"Port error: {e}", foreground="red"))
+
+    def _on_boot_done(self):
+        self.scan_btn.configure(state="normal")
+        self.scan_status.configure(text="Device ready — scanning automatically…", foreground="green")
+        # Auto-scan immediately: the device has a 3-second pre-sniffer window
+        threading.Thread(target=self._scan_worker,
+                         args=(self._selected_port(),), daemon=True).start()
 
     def _on_scan_done(self, networks: list[str], error_msg: str = ""):
         self.scan_btn.configure(state="normal")

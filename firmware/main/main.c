@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "linenoise/linenoise.h"
+#include "driver/usb_serial_jtag.h"
 #include "esp_console.h"
 #include "esp_crt_bundle.h"
 #include "esp_err.h"
@@ -166,7 +167,35 @@ void app_main(void)
     /* Start WiFi manager if configured; BLE always available */
     wifi_manager_init();     /* read config + register handlers; no WiFi start yet */
 
-    sniffer_autostart();     /* start sniffer in NULL + promiscuous mode */
+    /* Signal the setup wizard BEFORE sniffer_autostart so the wizard can
+     * run SCAN while the PHY is still in clean 2.4 GHz state.
+     * After sniffer_autostart calls phy_11p_set(1,0), 2.4 GHz scanning
+     * no longer works until a full chip reset. */
+    usb_serial_jtag_write_bytes((const uint8_t *)"BOOT_DONE\n", 10,
+                                pdMS_TO_TICKS(200));
+
+    /* Pre-sniffer window: allow wizard to run SCAN (takes ~25 s on all channels).
+     * Wait 3 s for a scan to start; if one does, wait up to 60 s for completion. */
+    {
+        const int BASE_WAIT_MS = 3000;
+        const int SCAN_TIMEOUT_MS = 60000;
+        int waited = 0;
+        bool scan_started = false;
+        while (waited < BASE_WAIT_MS) {
+            vTaskDelay(pdMS_TO_TICKS(200));
+            waited += 200;
+            if (usb_cfg_is_scanning()) { scan_started = true; break; }
+        }
+        if (scan_started) {
+            int scan_wait = 0;
+            while (usb_cfg_is_scanning() && scan_wait < SCAN_TIMEOUT_MS) {
+                vTaskDelay(pdMS_TO_TICKS(200));
+                scan_wait += 200;
+            }
+        }
+    }
+
+    sniffer_autostart();     /* start sniffer — sets phy_11p_set(1,0) */
 
     wifi_manager_start();    /* now safe to switch radio: STA or cycle task */
 

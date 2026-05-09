@@ -12,3 +12,6 @@ void usb_stream_send_test_frame(void);
  * them to NVS. Acknowledges with "CFG_OK:key\n" or "CFG_ERR:msg\n".
  */
 void usb_config_rx_start(void);
+
+/** True while a USB-triggered WiFi scan is in progress. */
+bool usb_cfg_is_scanning(void);
