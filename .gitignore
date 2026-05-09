@@ -30,3 +30,5 @@ Thumbs.db
 
 # On-device USB diagnostics dumps
 blelog.txt
+*.key
+*.pem

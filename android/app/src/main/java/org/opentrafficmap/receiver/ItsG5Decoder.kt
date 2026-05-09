@@ -42,10 +42,21 @@ object ItsG5Decoder {
             // Need at least 802.11 + LLC/SNAP + Basic + Common to read HT.
             if (p.size < hdrLen + 8 + 4 + 8) continue
 
+            // Verify LLC/SNAP magic — rejects wrong header-length guesses (e.g. hdrLen=24
+            // on a QoS-Data frame whose actual header is 26 bytes).
+            if (p[hdrLen + 0] != 0xAA.toByte()
+                || p[hdrLen + 1] != 0xAA.toByte()
+                || p[hdrLen + 2] != 0x03.toByte()
+                || p[hdrLen + 3] != 0x00.toByte()
+                || p[hdrLen + 4] != 0x00.toByte()
+                || p[hdrLen + 5] != 0x00.toByte()
+            ) continue
+
             val basicOff  = hdrLen + 8
             val commonOff = basicOff + 4
             val htHst = p[commonOff + 1].toInt() and 0xFF
-            val ht = (htHst shr 4) and 0x0F
+            val ht    = (htHst shr 4) and 0x0F
+            val hst   = htHst and 0x0F
 
             val extHdrLen = when (ht) {
                 1    ->  4    // BEACON       (no real ext hdr but Beacon hdr ~4 B)
@@ -57,11 +68,15 @@ object ItsG5Decoder {
                 else -> 28    // best-effort fallback (most common for V2X)
             }
 
-            val srcPosOff = commonOff + 8           // Source LongPV starts the ext hdr
-            val btpOff    = commonOff + 8 + extHdrLen
+            // SHB (ht=5, hst=0) puts the Source LPV directly at the start of the
+            // extended header.  Every other type (GBC, GAC, GUC, TSB) prepends a
+            // 2-byte sequence number + 2-byte reserved field before the LPV.
+            val srcPosInExt = if (ht == 5 && hst == 0) 0 else 4
+            val srcPosOff   = commonOff + 8 + srcPosInExt
+            val btpOff      = commonOff + 8 + extHdrLen
             if (p.size < btpOff + 4) continue
 
-            // Source Long Position Vector layout (28 B):
+            // Source Long Position Vector layout (24 B):
             //   GnAddress  8 B
             //     bit 0    M-flag
             //     bits 1-7 station-type
@@ -69,7 +84,8 @@ object ItsG5Decoder {
             //   timestamp  4 B
             //   latitude   4 B  (int32 BE, 1/10 µdeg)
             //   longitude  4 B  (int32 BE, 1/10 µdeg)
-            //   PAI(1) | speed(15) | heading(16)  — 4 B BE
+            //   PAI(1) | speed(15)  2 B BE
+            //   heading(16)         2 B BE
             val gnAddrHi = ((p[srcPosOff + 0].toInt() and 0xFF) shl 24) or
                            ((p[srcPosOff + 1].toInt() and 0xFF) shl 16) or
                            ((p[srcPosOff + 2].toInt() and 0xFF) shl  8) or
