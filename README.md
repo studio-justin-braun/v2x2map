@@ -42,7 +42,7 @@ The board supports 5.9 GHz IEEE 802.11p out of the box; the firmware drives it a
 
 <img src="docs/hardware.jpg" alt="Waveshare ESP32-C5-WIFI6-KIT dev board" width="340"/>
 
-- **Amazon:** [Waveshare ESP32-C5-WROOM-1 dev board](https://www.amazon.de/dp/B0GXVKM7PH?***REMOVED***) *
+- **Amazon:** [Waveshare ESP32-C5-WROOM-1 dev board](https://amzn.to/4uDpwNa) *
 - **AliExpress:** [Waveshare Official Store](https://s.click.aliexpress.com/e/_c3pGqqLN) *
 
 ---
