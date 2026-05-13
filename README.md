@@ -6,12 +6,20 @@ Plug a $20 ESP32-C5 dev board into your phone, drive somewhere with modern infra
 
 <table>
 <tr>
-<td><img src="docs/android-map.png"      alt="Android app — live map, Stuttgart" width="230"/></td>
-<td><img src="docs/android-settings.png" alt="Android app — settings"            width="230"/></td>
+<td><img src="docs/screenshot_01_main.png"         alt="V2X2MAP – Live map"              width="220"/></td>
+<td><img src="docs/screenshot_02_settings_top.png" alt="Settings – Display, Follow, Audio" width="220"/></td>
 </tr>
 <tr>
-<td align="center"><em>Live map with frames rolling in</em></td>
-<td align="center"><em>Settings</em></td>
+<td align="center"><em>Live map — BT connected, speed overlay, compass FAB</em></td>
+<td align="center"><em>Settings — Display, Auto-follow, Audio, Traffic light</em></td>
+</tr>
+<tr>
+<td><img src="docs/screenshot_03_settings_mid.png" alt="Settings – MQTT, Recording, Map" width="220"/></td>
+<td><img src="docs/screenshot_04_settings_bot.png" alt="Settings – Own track, BLE, Reset, About" width="220"/></td>
+</tr>
+<tr>
+<td align="center"><em>Settings — MQTT multi-broker, type filter, recording, map TTL</em></td>
+<td align="center"><em>Settings — Own track, BLE coex, Reset button, About</em></td>
 </tr>
 </table>
 
@@ -51,14 +59,18 @@ The board supports 5.9 GHz IEEE 802.11p out of the box; the firmware drives it a
 
 | Feature | Description |
 |---|---|
-| **Live map** | OSM map, colour-coded markers per ITS message type, heading-aware arrows for CAMs, auto-fade |
-| **Auto-follow** | Speed-adaptive zoom: 18 standing still, 14 above 80 km/h |
-| **Geiger-counter mode** | Audio + haptic tick on every frame, higher beep + buzz on DENM hazard |
-| **BLE + USB** | Raw 802.11 frames over USB-Serial-JTAG and BLE GATT, time-sliced automatically |
+| **Live map** | 5 switchable tile layers: Standard, Dark, Satellite, ÖPNV, Humanitarian |
+| **Grouped frame log** | One row per station (MAC); expandable to last 20 frames; shows type icon, speed, distance, 🔒/🔓 secured |
+| **CAM markers** | One marker per vehicle, updated in-place with baked-in heading + speed label |
+| **Compass mode** | Bearing-up FAB rotates the map to keep your heading at the top |
+| **Own GPS track** | Optional blue polyline traces your route |
+| **Auto-follow** | Map pans with you; zoom stays exactly as you set it |
+| **Geiger-counter mode** | Audio + haptic tick on every frame, distinct beep + buzz on DENM hazard |
+| **BLE + USB auto-reconnect** | Exponential-backoff reconnect on cable pull or BT drop — no user interaction |
 | **Offline maps** | OSMdroid tile cache up to 600 MB |
-| **Recording & replay** | One tap records every frame to `.itsg5`; replay with the Python bridge |
-| **MQTT bridge** | Optional re-publish to the public OpenTrafficMap broker or your own |
-| **Localised UI** | English default, German for German devices |
+| **PCAP recording** | One tap records to standard `.pcap`; open directly in Wireshark (link type 105 = IEEE 802.11) |
+| **Multi-broker MQTT** | One input field per broker, add/remove with + / 🗑; per-type message filter |
+| **Full i18n** | English default, German for German-locale devices — all UI, errors and notifications |
 
 ---
 
