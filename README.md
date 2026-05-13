@@ -6,20 +6,10 @@ Plug a $20 ESP32-C5 dev board into your phone, drive somewhere with modern infra
 
 <table>
 <tr>
-<td><img src="docs/screenshot_01_main.png"         alt="V2X2MAP – Live map"              width="220"/></td>
-<td><img src="docs/screenshot_02_settings_top.png" alt="Settings – Display, Follow, Audio" width="220"/></td>
-</tr>
-<tr>
-<td align="center"><em>Live map — BT connected, speed overlay, compass FAB</em></td>
-<td align="center"><em>Settings — Display, Auto-follow, Audio, Traffic light</em></td>
-</tr>
-<tr>
-<td><img src="docs/screenshot_03_settings_mid.png" alt="Settings – MQTT, Recording, Map" width="220"/></td>
-<td><img src="docs/screenshot_04_settings_bot.png" alt="Settings – Own track, BLE, Reset, About" width="220"/></td>
-</tr>
-<tr>
-<td align="center"><em>Settings — MQTT multi-broker, type filter, recording, map TTL</em></td>
-<td align="center"><em>Settings — Own track, BLE coex, Reset button, About</em></td>
+<td><img src="docs/screenshot_01_main.png"         alt="Live map"    width="160"/></td>
+<td><img src="docs/screenshot_02_settings_top.png" alt="Settings 1"  width="160"/></td>
+<td><img src="docs/screenshot_03_settings_mid.png" alt="Settings 2"  width="160"/></td>
+<td><img src="docs/screenshot_04_settings_bot.png" alt="Settings 3"  width="160"/></td>
 </tr>
 </table>
 
