@@ -311,18 +311,32 @@ def build_mqtt_clients(node_id: str, broker_urls: list[str], status_topic: str,
 # ---------------------------------------------------------------------------
 
 def _base_dir() -> str:
-    return os.path.dirname(sys.executable if getattr(sys, "frozen", False)
-                           else os.path.abspath(__file__))
+    """
+    Windows frozen (.exe) : directory containing the executable
+    Windows dev            : directory containing this script
+    Linux / macOS          : ~/.config/v2x2map  (XDG)
+    """
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    if sys.platform == "win32":
+        return os.path.dirname(os.path.abspath(__file__))
+    xdg = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
+    return os.path.join(xdg, "v2x2map")
 
 
 def _config_path() -> str:
-    d = os.path.join(_base_dir(), "config")
+    d = _base_dir()
+    if sys.platform == "win32" or getattr(sys, "frozen", False):
+        d = os.path.join(d, "config")
     os.makedirs(d, exist_ok=True)
     return os.path.join(d, "v2x2map.cfg")
 
 
 def _recordings_dir() -> str:
-    d = os.path.join(_base_dir(), "recordings")
+    if getattr(sys, "frozen", False) or sys.platform == "win32":
+        d = os.path.join(_base_dir(), "recordings")
+    else:
+        d = os.path.join(os.path.expanduser("~"), "v2x2map", "recordings")
     os.makedirs(d, exist_ok=True)
     return d
 
