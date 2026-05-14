@@ -54,7 +54,26 @@ object ItsG5Decoder {
 
             val basicOff  = hdrLen + 8
             val commonOff = basicOff + 4
-            val htHst = p[commonOff + 1].toInt() and 0xFF
+
+            // GeoNetworking Basic Header NH field (low nibble of byte 0).
+            // NH=2 → IEEE 1609.2 secured packet: the GN Common Header is inside
+            // the security envelope, not directly at commonOff.
+            val nh      = p[basicOff].toInt() and 0x0F
+            val secured = nh == 2
+
+            // For secured packets scan the first ~20 bytes of the 1609.2 envelope
+            // to locate the inner GN Common Header.  For unsecured packets the
+            // GN Common Header is directly at commonOff.
+            val innerOff: Int = if (secured) {
+                findInnerGnCommonHeader(p, commonOff, minOf(commonOff + 20, p.size - 36))
+                    .takeIf { it >= 0 } ?: continue
+            } else {
+                commonOff
+            }
+
+            if (p.size < innerOff + 8) continue
+
+            val htHst = p[innerOff + 1].toInt() and 0xFF
             val ht    = (htHst shr 4) and 0x0F
             val hst   = htHst and 0x0F
 
@@ -72,14 +91,15 @@ object ItsG5Decoder {
             // extended header.  Every other type (GBC, GAC, GUC, TSB) prepends a
             // 2-byte sequence number + 2-byte reserved field before the LPV.
             val srcPosInExt = if (ht == 5 && hst == 0) 0 else 4
-            val srcPosOff   = commonOff + 8 + srcPosInExt
-            val btpOff      = commonOff + 8 + extHdrLen
+            val srcPosOff   = innerOff + 8 + srcPosInExt
+            val btpOff      = innerOff + 8 + extHdrLen
             if (p.size < btpOff + 4) continue
 
             // Source Long Position Vector layout (24 B):
             //   GnAddress  8 B
-            //     bit 0    M-flag
-            //     bits 1-7 station-type
+            //     bit 7    M-flag (manually configured)
+            //     bits 6-2 station-type (5-bit ETSI EN 302 636-4-1 StationType)
+            //     bits 1-0 reserved
             //     bytes 2..7 LL-MAC of the originator (6 B)
             //   timestamp  4 B
             //   latitude   4 B  (int32 BE, 1/10 µdeg)
@@ -97,6 +117,8 @@ object ItsG5Decoder {
             // station-id is whole 8-byte addr packed into a Long
             val stationId = ((gnAddrHi.toLong() and 0xFFFFFFFFL) shl 32) or
                             (gnAddrLo.toLong() and 0xFFFFFFFFL)
+            // StationType from GN addr byte 0 bits 6..2 (ETSI EN 302 636-4-1 §9.1.3)
+            val stationType = ((p[srcPosOff + 0].toInt() and 0xFF) shr 2) and 0x1F
 
             // Standard LPV layout: GN_ADDR(8) + TST(4) + LAT(4) + LON(4) + PAI|SPD(2) + HDG(2)
             // Some RSU implementations use an 8-byte TAI timestamp instead of the standard 4-byte,
@@ -135,21 +157,17 @@ object ItsG5Decoder {
             val spatPhase = if (msgType == MsgType.SPATEM)
                 SpatTemParser.extractPhase(p, btpOff) else null
 
-            // GeoNetworking Basic Header byte 0 low nibble = NH field
-            // NH=2 → Secured Packet (IEEE 1609.2 signed/encrypted)
-            val nh = p[basicOff].toInt() and 0x0F
-            val secured = nh == 2
-
             return Decoded(
-                etherType  = et,
-                msgType    = msgType,
-                stationId  = stationId,
-                latLon     = latLon,
-                headingDeg = if (latLon != null && headingRaw != 0xFFFF) heading else null,
-                speedMps   = if (latLon != null) speed else null,
-                btpDstPort = dstPort,
-                spatPhase  = spatPhase,
-                secured    = secured,
+                etherType   = et,
+                msgType     = msgType,
+                stationId   = stationId,
+                stationType = stationType,
+                latLon      = latLon,
+                headingDeg  = if (latLon != null && headingRaw != 0xFFFF) heading else null,
+                speedMps    = if (latLon != null) speed else null,
+                btpDstPort  = dstPort,
+                spatPhase   = spatPhase,
+                secured     = secured,
             )
         }
         return Decoded(etherType = et)
@@ -177,18 +195,43 @@ object ItsG5Decoder {
 
     private val HDR_LENGTHS = intArrayOf(24, 26, 30, 32)
 
+    /**
+     * Locates the inner GN Common Header inside an IEEE 1609.2 security envelope.
+     *
+     * When the outer GN Basic Header has NH=2 (secured packet), the GN Common
+     * Header is wrapped inside the 1609.2 SignedData structure.  In practice the
+     * 1609.2 prefix is 7–8 bytes (`03 81 00 40 03 80 [len1|len2]`), placing the
+     * inner GN Common Header 7–8 bytes after the outer basic header ends.
+     *
+     * A valid GN Common Header satisfies:
+     *   • byte 0 upper nibble (NH) ∈ {0,1,2}  (Any / BTP-A / BTP-B)
+     *   • byte 1 upper nibble (HT) ∈ {4,5,6}  (GBC / TSB-SHB / LS)
+     *   • bytes 4-5 (payload length) ∈ {1..999}
+     */
+    private fun findInnerGnCommonHeader(p: ByteArray, start: Int, end: Int): Int {
+        for (off in start until end) {
+            if (off + 8 > p.size) break
+            val nhInner   = (p[off].toInt() and 0xFF) ushr 4
+            val htInner   = (p[off + 1].toInt() and 0xFF) ushr 4
+            val plenInner = ((p[off + 4].toInt() and 0xFF) shl 8) or (p[off + 5].toInt() and 0xFF)
+            if (nhInner in 0..2 && htInner in 4..6 && plenInner in 1..999) return off
+        }
+        return -1
+    }
+
     // ---- public types -------------------------------------------------
 
     data class Decoded(
-        val etherType: Int? = null,
-        val msgType: MsgType = MsgType.UNKNOWN,
-        val stationId: Long? = null,
-        val latLon: Pair<Double, Double>? = null,
-        val headingDeg: Double? = null,
-        val speedMps: Double? = null,
-        val btpDstPort: Int? = null,
-        val spatPhase: SpatTemParser.Phase? = null,
-        val secured: Boolean? = null,  // GN Basic Header NH == 2 → IEEE 1609.2
+        val etherType:   Int? = null,
+        val msgType:     MsgType = MsgType.UNKNOWN,
+        val stationId:   Long? = null,
+        val stationType: Int? = null,   // ETSI EN 302 636-4-1 StationType (5-bit, 0=unknown 5=passengerCar 15=RSU)
+        val latLon:      Pair<Double, Double>? = null,
+        val headingDeg:  Double? = null,
+        val speedMps:    Double? = null,
+        val btpDstPort:  Int? = null,
+        val spatPhase:   SpatTemParser.Phase? = null,
+        val secured:     Boolean? = null,  // GN Basic Header NH == 2 → IEEE 1609.2
     )
 
     /** ITS message type. Colors are M3-friendly tones the Marker drawables tint to. */

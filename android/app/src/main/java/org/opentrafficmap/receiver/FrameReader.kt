@@ -57,18 +57,19 @@ class FrameReader {
 
             val d = ItsG5Decoder.decodeFull(payload)
             out += Frame(
-                seq        = ++seq,
-                sec        = sec,
-                usec       = usec,
-                payload    = payload,
-                etherType  = d.etherType,
-                msgType    = d.msgType,
-                stationId  = d.stationId,
-                latLon     = d.latLon,
-                headingDeg = d.headingDeg,
-                speedMps   = d.speedMps,
-                spatPhase  = d.spatPhase,
-                secured    = d.secured,
+                seq         = ++seq,
+                sec         = sec,
+                usec        = usec,
+                payload     = payload,
+                etherType   = d.etherType,
+                msgType     = d.msgType,
+                stationId   = d.stationId,
+                stationType = d.stationType,
+                latLon      = d.latLon,
+                headingDeg  = d.headingDeg,
+                speedMps    = d.speedMps,
+                spatPhase   = d.spatPhase,
+                secured     = d.secured,
             )
         }
     }

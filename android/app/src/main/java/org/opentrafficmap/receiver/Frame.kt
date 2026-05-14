@@ -12,6 +12,7 @@ data class Frame(
     val etherType: Int?,
     val msgType: ItsG5Decoder.MsgType,
     val stationId: Long?,
+    val stationType: Int? = null,   // ETSI StationType (5-bit: 0=unknown 5=passengerCar 15=RSU)
     val latLon: Pair<Double, Double>?,
     val headingDeg: Double?,
     val speedMps: Double?,
