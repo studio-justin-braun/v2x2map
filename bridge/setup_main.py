@@ -22,16 +22,28 @@ def main():
         )
         bridge = os.path.join(exe_dir, "its-g5-bridge.exe")
         if not os.path.isfile(bridge):
-            # Dev mode: try without .exe extension
             bridge = os.path.join(exe_dir, "its-g5-bridge")
+
+        # Pass all settings explicitly — config file may not be readable yet
+        # on the very first launch (race condition / path issues).
+        cmd = [bridge, "--open-browser",
+               "--node-id", result["node_id"]]
+        if result.get("port"):
+            cmd += ["--port", result["port"]]
+        for url in result.get("brokers", []):
+            cmd += ["--broker", url]
+
         try:
-            subprocess.Popen([bridge, "--open-browser"])
-        except FileNotFoundError:
-            import tkinter.messagebox as mb
-            mb.showinfo(
-                "V2X2MAP Setup",
-                f"Bridge executable not found:\n{bridge}\n\n"
-                "Please start its-g5-bridge.exe manually.",
+            subprocess.Popen(cmd)
+        except Exception as exc:
+            # tkinter root is already destroyed — use Windows MessageBox directly
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(
+                0,
+                f"Could not launch its-g5-bridge.exe:\n{exc}\n\n"
+                f"Make sure both EXE files are in the same folder:\n{exe_dir}",
+                "V2X2MAP — Launch failed",
+                0x30,  # MB_ICONWARNING | MB_OK
             )
 
 
