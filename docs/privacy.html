@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>V2X2MAP — Privacy Policy</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; line-height: 1.55; color: #1a1a1a; }
+  h1 { font-size: 1.6rem; } h2 { font-size: 1.15rem; margin-top: 1.8rem; }
+  code { background: #f0f0f0; padding: 0 .25rem; border-radius: 3px; }
+  .muted { color: #666; font-size: .9rem; }
+</style>
+</head>
+<body>
+<h1>Privacy Policy — V2X2MAP</h1>
+<p class="muted">Last updated: 2026-05-26</p>
+
+<p>V2X2MAP ("the app") displays ITS-G5 / V2X radio messages received from an external
+ESP32-C5 hardware receiver. This policy explains what data the app uses and where it goes.</p>
+
+<h2>Short version</h2>
+<p>The app works fully on your device. It does not require an account, contains no
+advertising, and includes no analytics or third-party tracking. No personal data is sent
+to the developer.</p>
+
+<h2>Location data</h2>
+<p>With your permission, the app uses your device's GPS location to centre the map on your
+position and to calculate the distance to received V2X messages. Your location is processed
+<strong>on the device only</strong> and is not transmitted to the developer or any third
+party. It is not stored beyond the current session unless you explicitly enable the optional
+"GPS track" or recording features, which save data to your device's app storage.</p>
+
+<h2>Optional MQTT forwarding</h2>
+<p>MQTT forwarding is <strong>disabled by default</strong>. If you enable it, the app
+publishes the V2X messages it receives over the air, together with a device identifier
+derived from the connected receiver's hardware (MAC) address, to the MQTT broker you
+configure. The default broker is operated by the OpenTrafficMap project
+(<code>cits1.opentrafficmap.org</code>); you may change it to your own broker or leave it
+disabled. The V2X messages are broadcast traffic data from other stations, not your personal
+information. The connection uses TLS.</p>
+
+<h2>Hardware access (USB / Bluetooth)</h2>
+<p>The app communicates with the ESP32-C5 receiver over USB-OTG or Bluetooth LE solely to
+read the captured radio frames and to flash firmware during setup. No data from these
+interfaces is sent off the device except through the optional MQTT feature described above.</p>
+
+<h2>Data stored on your device</h2>
+<p>Recordings you create (PCAP captures, CSV range/session logs, GPS tracks) are stored in
+the app's private storage on your device. You control them and can delete them at any time.
+They are never uploaded automatically.</p>
+
+<h2>Permissions</h2>
+<ul>
+  <li><strong>Location</strong> — map centring and distance calculation (on-device).</li>
+  <li><strong>USB</strong> — communicate with the ESP32-C5 receiver.</li>
+  <li><strong>Bluetooth</strong> — optional wireless connection to the receiver.</li>
+  <li><strong>Notifications / Foreground service</strong> — keep receiving while the app runs in the background.</li>
+  <li><strong>Internet</strong> — load map tiles and, if enabled, MQTT forwarding.</li>
+</ul>
+
+<h2>Children</h2>
+<p>The app is not directed at children and collects no personal data.</p>
+
+<h2>Contact</h2>
+<p>Questions about this policy: <a href="mailto:peterholzhauser@gmail.com">peterholzhauser@gmail.com</a></p>
+</body>
+</html>
